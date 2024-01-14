@@ -9,15 +9,17 @@ import (
 	"time"
 )
 
-func GetFileList(root string) ([]string, error) {
+func GetFileList(root string, find string, gif bool) ([]string, error) {
 	var list []string
 	filepath.WalkDir(root, func(path string, d fs.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 
-		if !d.IsDir() && (strings.HasSuffix(path, ".png") || strings.HasSuffix(path, ".jpg")) {
-			list = append(list, path)
+		if !d.IsDir() && (strings.HasSuffix(path, ".png") || strings.HasSuffix(path, ".jpg") || (gif && strings.HasSuffix(path, ".gif"))) {
+			if strings.Contains(strings.ToLower(path), strings.ToLower(find)) {
+				list = append(list, path)
+			}
 		}
 		return nil
 	})
