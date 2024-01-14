@@ -1,0 +1,15 @@
+{
+    "port": 9150,
+    "address": "127.0.0.1",
+    "rootFolder": "",
+    "allowGifs": true,
+    "dbPath": "./images.db",
+    "compression": {
+        "useCompression": true,
+        "compLevel": 2
+    },
+    "caching": {
+        "useCache": true,
+        "expirCache": 30
+    }
+}
