@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/basicauth"
 	"github.com/gofiber/fiber/v2/middleware/cache"
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/etag"
@@ -39,6 +40,14 @@ func Start(cnf *config.Config) {
 		DisableColors: false,
 	}))
 	api.Use(recover.New())
+
+	if cnf.Auth.Enable {
+		api.Use(basicauth.New(basicauth.Config{
+			Users: map[string]string{
+				cnf.Auth.Login: cnf.Auth.Password,
+			},
+		}))
+	}
 
 	if cnf.Cache.UseCache {
 		c := cache.ConfigDefault

@@ -11,5 +11,10 @@
     "caching": {
         "useCache": true,
         "expirCache": 30
+    },
+    "auth": {
+        "enable": true,
+        "login": "admin",
+        "password": "admin"
     }
 }
