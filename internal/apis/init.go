@@ -19,6 +19,7 @@ var globConf *config.Config
 
 func Start(cnf *config.Config) {
 	globConf = cnf
+
 	app := fiber.New()
 	api := app.Group("/api")
 	getters := api.Group("/get")
@@ -39,6 +40,13 @@ func Start(cnf *config.Config) {
 	if cnf.Cache.UseCache {
 		c := cache.ConfigDefault
 		c.Expiration = time.Duration(cnf.Cache.ExpCache) * time.Second
+		c.Next = func(ctx *fiber.Ctx) bool {
+			if ctx.Query("noCache") == "true" {
+				return true
+			} else {
+				return false
+			}
+		}
 		getters.Use(cache.New(c))
 	}
 	if cnf.Compression.UseCompression {
@@ -53,8 +61,8 @@ func Start(cnf *config.Config) {
 	getters.Use(etag.New(etag.ConfigDefault))
 	getters.Use(idempotency.New(idempotency.ConfigDefault))
 
+	getters.Get("/search", searchFile)
 	getters.Get("/random", getRandFile)
-	getters.Get("/random/:contains", getRandFile)
 	putters.Put("/scan", startScan)
 
 	app.Listen(fmt.Sprintf("%s:%d", cnf.Address, cnf.Port))
