@@ -1,6 +1,7 @@
 package apis
 
 import (
+	"buster_daemon/imageserver/internal/apis/database"
 	"buster_daemon/imageserver/internal/filelist"
 	"net/http"
 
@@ -14,10 +15,6 @@ func startScan(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	// TODO: Implement writing data into database
-	var Body struct {
-		Files []string
-	}
-	Body.Files = fl
-	return ctx.JSON(Body)
+	go database.InsertRecords(globConf.DBPath, fl)
+	return ctx.SendStatus(http.StatusAccepted)
 }
