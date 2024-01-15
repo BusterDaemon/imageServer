@@ -19,6 +19,11 @@ type Config struct {
 		UseCache bool `json:"useCache"`
 		ExpCache uint `json:"expirCache"`
 	} `json:"caching"`
+	Auth struct {
+		Enable   bool   `json:"enable"`
+		Login    string `json:"login"`
+		Password string `json:"password"`
+	} `json:"auth"`
 }
 
 func ReadConfig(configPath string) (Config, error) {
