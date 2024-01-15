@@ -3,7 +3,10 @@ package apis
 import (
 	"buster_daemon/imageserver/internal/config"
 	"fmt"
+	"log"
+	"net"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -41,7 +44,7 @@ func Start(cnf *config.Config) {
 		c := cache.ConfigDefault
 		c.Expiration = time.Duration(cnf.Cache.ExpCache) * time.Second
 		c.Next = func(ctx *fiber.Ctx) bool {
-			if ctx.Query("noCache") == "true" {
+			if ctx.Query("noCache") == "true" || strings.Contains(ctx.OriginalURL(), "/search") {
 				return true
 			} else {
 				return false
@@ -65,5 +68,10 @@ func Start(cnf *config.Config) {
 	getters.Get("/random", getRandFile)
 	putters.Put("/scan", startScan)
 
-	app.Listen(fmt.Sprintf("%s:%d", cnf.Address, cnf.Port))
+	ln, err := net.Listen("tcp", fmt.Sprintf("%s:%d", globConf.Address, globConf.Port))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	app.Listener(ln)
 }
