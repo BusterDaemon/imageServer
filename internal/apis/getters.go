@@ -2,7 +2,9 @@ package apis
 
 import (
 	"buster_daemon/imageserver/internal/apis/database"
+	"fmt"
 	"log"
+	"math"
 	"net/http"
 	"strconv"
 
@@ -79,7 +81,7 @@ func searchFile(ctx *fiber.Ctx) error {
 	}
 	offset := (page - 1) * pageSize
 
-	images, err := database.SearchImages(globConf.DBPath, database.SearchParams{
+	images, totalImages, err := database.SearchImages(globConf.DBPath, database.SearchParams{
 		Substring: substr,
 		Xdim:      uint(xdim),
 		XCompar:   uint8(xCompar),
@@ -94,6 +96,13 @@ func searchFile(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.SendStatus(http.StatusNotFound)
 	}
+
+	if len(images) < 1 {
+		return ctx.SendStatus(http.StatusNotFound)
+	}
+
+	totalPages := math.Ceil(float64(totalImages) / float64(pageSize))
+	ctx.Response().Header.Add("X-TOTAL-PAGES", fmt.Sprintf("%0.f", totalPages))
 
 	return ctx.JSON(images)
 }

@@ -61,8 +61,9 @@ func SelectRandomFile(dbPath string, params RandomParams) (string, error) {
 	return image.FilePath, nil
 }
 
-func SearchImages(dbPath string, params SearchParams) ([]Images, error) {
+func SearchImages(dbPath string, params SearchParams) ([]Images, int64, error) {
 	var images []Images
+	var total int64
 
 	if params.Limit < 1 {
 		params.Limit = 10
@@ -70,10 +71,10 @@ func SearchImages(dbPath string, params SearchParams) ([]Images, error) {
 
 	conn, err := gorm.Open(sqlite.Open(dbPath))
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	res := conn.Model(&images).Limit(int(params.Limit)).Offset(int(params.Offset))
+	res := conn.Model(&images)
 	if params.Substring != "" {
 		res.Where("file_path LIKE ?", "%"+params.Substring+"%")
 	}
@@ -114,10 +115,10 @@ func SearchImages(dbPath string, params SearchParams) ([]Images, error) {
 		}
 	}
 
-	err = res.Order("file_path ASC").Find(&images).Error
+	err = res.Count(&total).Limit(int(params.Limit)).Offset(int(params.Offset)).Order("file_path ASC").Find(&images).Error
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return images, nil
+	return images, total, nil
 }
