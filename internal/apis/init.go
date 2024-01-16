@@ -74,6 +74,7 @@ func Start(cnf *config.Config) {
 	getters.Use(idempotency.New(idempotency.ConfigDefault))
 
 	getters.Get("/search", searchFile)
+	getters.Get("/image", specificImage)
 	getters.Get("/random", getRandFile)
 	putters.Put("/scan", startScan)
 

@@ -7,6 +7,7 @@ import (
 	"math"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -28,7 +29,39 @@ func getRandFile(ctx *fiber.Ctx) error {
 		return ctx.SendStatus(http.StatusInternalServerError)
 	}
 
+	fname := strings.Split(f, "/")
+	ctx.Set("Content-Disposition", `inline; filename="`+fname[len(fname)-1]+`"`)
+
 	return ctx.SendFile(f, true)
+}
+
+func specificImage(ctx *fiber.Ctx) error {
+	name := ctx.Query("name", "")
+	sId := ctx.Query("id", "1")
+	sComp := ctx.Query("selects", "0")
+
+	id, err := strconv.ParseUint(sId, 10, 64)
+	if err != nil {
+		return ctx.SendStatus(http.StatusInternalServerError)
+	}
+	comp, err := strconv.ParseUint(sComp, 10, 64)
+	if err != nil {
+		return ctx.SendStatus(http.StatusInternalServerError)
+	}
+
+	image, err := database.SelectSpecificImage(globConf.DBPath, database.SelectParams{
+		Id:         uint(id),
+		Name:       name,
+		ComparMode: uint8(comp),
+	})
+	if err != nil {
+		ctx.SendStatus(http.StatusNotFound)
+	}
+
+	filename := strings.Split(image.FilePath, "/")
+	ctx.Set("Content-Disposition", `inline; filename="`+filename[len(filename)-1]+`"`)
+
+	return ctx.SendFile(image.FilePath, true)
 }
 
 func searchFile(ctx *fiber.Ctx) error {
