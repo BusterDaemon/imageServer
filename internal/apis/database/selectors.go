@@ -20,6 +20,11 @@ const (
 )
 
 const (
+	AND uint8 = iota
+	OR
+)
+
+const (
 	NAME_ASC uint8 = iota
 	NAME_DESC
 	ID_ASC
@@ -33,6 +38,12 @@ const (
 type RandomParams struct {
 	Substring string
 	Landscape uint8
+}
+
+type SelectParams struct {
+	Id         uint
+	Name       string
+	ComparMode uint8
 }
 
 type SearchParams struct {
@@ -69,6 +80,37 @@ func SelectRandomFile(dbPath string, params RandomParams) (string, error) {
 
 	res.Order("RANDOM()").First(&image)
 	return image.FilePath, nil
+}
+
+func SelectSpecificImage(dbPath string, params SelectParams) (Images, error) {
+	var image Images
+	conn, err := gorm.Open(sqlite.Open(dbPath))
+	if err != nil {
+		return Images{}, err
+	}
+	res := conn.Model(&image)
+
+	if params.Id != 0 && params.Name != "" {
+		switch params.ComparMode {
+		case AND:
+			res = res.Where("file_path LIKE ?", "%"+params.Name+"%").Where("id = ?", params.Id)
+		case OR:
+			res = res.Where("file_path LIKE ?", "%"+params.Name+"%").Or("id = ?", params.Id)
+		default:
+			res = res.Where("file_path LIKE ?", "%"+params.Name+"%").Or("id = ?", params.Id)
+		}
+	} else if params.Id == 0 && params.Name != "" {
+		res = res.Where("file_path LIKE ?", "%"+params.Name+"%")
+	} else if params.Id != 0 && params.Name == "" {
+		res = res.Where("id = ?", params.Id)
+	}
+
+	err = res.First(&image).Error
+	if err != nil {
+		return Images{}, err
+	}
+
+	return image, nil
 }
 
 func SearchImages(dbPath string, params SearchParams) ([]Images, int64, error) {
