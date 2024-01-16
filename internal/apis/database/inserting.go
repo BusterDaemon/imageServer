@@ -1,6 +1,7 @@
 package database
 
 import (
+	"errors"
 	"image"
 	_ "image/gif"
 	_ "image/jpeg"
@@ -18,9 +19,12 @@ func InsertRecords(dbPath string, filesPath []string) error {
 	}
 
 	for _, file := range filesPath {
-		var (
-			image Images
-		)
+		var image Images
+
+		err = conn.Where("file_path = ?", file).Error
+		if err == nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+			continue
+		}
 
 		image.FilePath = file
 		x, y, err := GetBounds(image.FilePath)
