@@ -19,6 +19,17 @@ const (
 	EQUAL
 )
 
+const (
+	NAME_ASC uint8 = iota
+	NAME_DESC
+	ID_ASC
+	ID_DESC
+	XDIM_ASC
+	XDIM_DESC
+	YDIM_ASC
+	YDIM_DESC
+)
+
 type RandomParams struct {
 	Substring string
 	Landscape uint8
@@ -28,11 +39,10 @@ type SearchParams struct {
 	Substring string
 	Xdim      uint
 	XCompar   uint8
-	XLess     uint
 	Ydim      uint
 	YCompar   uint8
-	YLess     uint
 	Landscape uint8
+	SortOrder uint8
 	Limit     uint
 	Offset    uint
 }
@@ -62,8 +72,11 @@ func SelectRandomFile(dbPath string, params RandomParams) (string, error) {
 }
 
 func SearchImages(dbPath string, params SearchParams) ([]Images, int64, error) {
-	var images []Images
-	var total int64
+	var (
+		images []Images
+		total  int64
+		order  string
+	)
 
 	if params.Limit < 1 {
 		params.Limit = 10
@@ -88,34 +101,55 @@ func SearchImages(dbPath string, params SearchParams) ([]Images, int64, error) {
 	if params.Xdim != 0 {
 		switch params.XCompar {
 		case LESS_THAN:
-			res.Where("xdim < ?", params.XLess)
+			res.Where("xdim < ?", params.Xdim)
 		case GREATER_THAN:
-			res.Where("xdim > ?", params.XLess)
+			res.Where("xdim > ?", params.Xdim)
 		case LESS_THAN_OR_EQUAL:
-			res.Where("xdim <= ?", params.XLess)
+			res.Where("xdim <= ?", params.Xdim)
 		case GREATER_THAN_OR_EQUAL:
-			res.Where("xdim >= ?", params.XLess)
+			res.Where("xdim >= ?", params.Xdim)
 		case EQUAL:
-			res.Where("xdim = ?", params.XLess)
+			res.Where("xdim = ?", params.Xdim)
 		}
 	}
 
 	if params.Ydim != 0 {
 		switch params.YCompar {
 		case LESS_THAN:
-			res.Where("ydim < ?", params.YLess)
+			res.Where("ydim < ?", params.Ydim)
 		case GREATER_THAN:
-			res.Where("ydim > ?", params.YLess)
+			res.Where("ydim > ?", params.Ydim)
 		case LESS_THAN_OR_EQUAL:
-			res.Where("ydim <= ?", params.YLess)
+			res.Where("ydim <= ?", params.Ydim)
 		case GREATER_THAN_OR_EQUAL:
-			res.Where("ydim >= ?", params.YLess)
+			res.Where("ydim >= ?", params.Ydim)
 		case EQUAL:
-			res.Where("ydim = ?", params.YLess)
+			res.Where("ydim = ?", params.Ydim)
 		}
 	}
 
-	err = res.Count(&total).Limit(int(params.Limit)).Offset(int(params.Offset)).Order("file_path ASC").Find(&images).Error
+	switch params.SortOrder {
+	case NAME_ASC:
+		order = "file_path ASC"
+	case NAME_DESC:
+		order = "file_path DESC"
+	case ID_ASC:
+		order = "id ASC"
+	case ID_DESC:
+		order = "id DESC"
+	case XDIM_ASC:
+		order = "xdim ASC"
+	case XDIM_DESC:
+		order = "xdim DESC"
+	case YDIM_ASC:
+		order = "ydim ASC"
+	case YDIM_DESC:
+		order = "ydim DESC"
+	default:
+		order = "file_path ASC"
+	}
+
+	err = res.Count(&total).Limit(int(params.Limit)).Offset(int(params.Offset)).Order(order).Find(&images).Error
 	if err != nil {
 		return nil, 0, err
 	}
