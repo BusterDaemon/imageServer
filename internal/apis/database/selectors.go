@@ -37,6 +37,10 @@ const (
 
 type RandomParams struct {
 	Substring string
+	Xdim      uint
+	XCompar   uint8
+	Ydim      uint
+	YCompar   uint8
 	Landscape uint8
 }
 
@@ -68,14 +72,44 @@ func SelectRandomFile(dbPath string, params RandomParams) (string, error) {
 
 	res := conn.Model(&image)
 	if params.Substring != "" {
-		res.Where("file_path LIKE ?", "%"+params.Substring+"%")
+		res = res.Where("file_path LIKE ?", "%"+params.Substring+"%")
+	}
+
+	if params.Xdim != 0 {
+		switch params.XCompar {
+		case LESS_THAN:
+			res = res.Where("xdim < ?", params.Xdim)
+		case GREATER_THAN:
+			res = res.Where("xdim > ?", params.Xdim)
+		case LESS_THAN_OR_EQUAL:
+			res = res.Where("xdim <= ?", params.Xdim)
+		case GREATER_THAN_OR_EQUAL:
+			res = res.Where("xdim >= ?", params.Xdim)
+		case EQUAL:
+			res = res.Where("xdim = ?", params.Xdim)
+		}
+	}
+
+	if params.Ydim != 0 {
+		switch params.XCompar {
+		case LESS_THAN:
+			res = res.Where("ydim < ?", params.Ydim)
+		case GREATER_THAN:
+			res = res.Where("ydim > ?", params.Ydim)
+		case LESS_THAN_OR_EQUAL:
+			res = res.Where("ydim <= ?", params.Ydim)
+		case GREATER_THAN_OR_EQUAL:
+			res = res.Where("ydim >= ?", params.Ydim)
+		case EQUAL:
+			res = res.Where("ydim = ?", params.Ydim)
+		}
 	}
 
 	switch params.Landscape {
 	case LANDSCAPE_IMAGES:
-		res.Where("xdim > (ydim * 1.2)")
+		res = res.Where("xdim > (ydim * 1.2)")
 	case PORTRAIT_IMAGES:
-		res.Where("xdim <= ydim")
+		res = res.Where("xdim <= ydim")
 	}
 
 	res.Order("RANDOM()").First(&image)
@@ -131,42 +165,42 @@ func SearchImages(dbPath string, params SearchParams) ([]Images, int64, error) {
 
 	res := conn.Model(&images)
 	if params.Substring != "" {
-		res.Where("file_path LIKE ?", "%"+params.Substring+"%")
+		res = res.Where("file_path LIKE ?", "%"+params.Substring+"%")
 	}
 
 	if params.Landscape == LANDSCAPE_IMAGES {
-		res.Where("xdim > (ydim * 1.2)")
+		res = res.Where("xdim > (ydim * 1.2)")
 	} else if params.Landscape == PORTRAIT_IMAGES {
-		res.Where("xdim <= ydim")
+		res = res.Where("xdim <= ydim")
 	}
 
 	if params.Xdim != 0 {
 		switch params.XCompar {
 		case LESS_THAN:
-			res.Where("xdim < ?", params.Xdim)
+			res = res.Where("xdim < ?", params.Xdim)
 		case GREATER_THAN:
-			res.Where("xdim > ?", params.Xdim)
+			res = res.Where("xdim > ?", params.Xdim)
 		case LESS_THAN_OR_EQUAL:
-			res.Where("xdim <= ?", params.Xdim)
+			res = res.Where("xdim <= ?", params.Xdim)
 		case GREATER_THAN_OR_EQUAL:
-			res.Where("xdim >= ?", params.Xdim)
+			res = res.Where("xdim >= ?", params.Xdim)
 		case EQUAL:
-			res.Where("xdim = ?", params.Xdim)
+			res = res.Where("xdim = ?", params.Xdim)
 		}
 	}
 
 	if params.Ydim != 0 {
 		switch params.YCompar {
 		case LESS_THAN:
-			res.Where("ydim < ?", params.Ydim)
+			res = res.Where("ydim < ?", params.Ydim)
 		case GREATER_THAN:
-			res.Where("ydim > ?", params.Ydim)
+			res = res.Where("ydim > ?", params.Ydim)
 		case LESS_THAN_OR_EQUAL:
-			res.Where("ydim <= ?", params.Ydim)
+			res = res.Where("ydim <= ?", params.Ydim)
 		case GREATER_THAN_OR_EQUAL:
-			res.Where("ydim >= ?", params.Ydim)
+			res = res.Where("ydim >= ?", params.Ydim)
 		case EQUAL:
-			res.Where("ydim = ?", params.Ydim)
+			res = res.Where("ydim = ?", params.Ydim)
 		}
 	}
 
