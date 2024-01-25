@@ -30,6 +30,7 @@ func Start(cnf *config.Config, zapper *zap.Logger) {
 	api := app.Group("/api")
 	getters := api.Group("/get")
 	putters := api.Group("/put")
+	scanners := putters.Group("/scan")
 
 	api.Use(logger.New(logger.Config{
 		Next:          nil,
@@ -98,7 +99,8 @@ func Start(cnf *config.Config, zapper *zap.Logger) {
 	getters.Get("/image", specificImage)
 	getters.Get("/image/info", imageInfo)
 	getters.Get("/random", getRandFile)
-	putters.Put("/scan", startScan)
+	scanners.Put("/new", startNewScan)
+	scanners.Put("/old", startNonExistScan)
 
 	ln, err := net.Listen("tcp", fmt.Sprintf("%s:%d", globConf.Address, globConf.Port))
 	if err != nil {
