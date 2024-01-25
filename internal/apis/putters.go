@@ -15,6 +15,6 @@ func startScan(ctx *fiber.Ctx) error {
 		return err
 	}
 
-	go database.InsertRecords(globConf.DBPath, fl)
+	go database.InsertRecords(globConf.DBPath, fl, globLogger)
 	return ctx.SendStatus(http.StatusAccepted)
 }

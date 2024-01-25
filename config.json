@@ -1,7 +1,7 @@
 {
     "port": 9150,
-    "address": "127.0.0.1",
-    "rootFolder": "",
+    "address": "0.0.0.0",
+    "rootFolder": "/home/busterd/Vaults",
     "allowGifs": true,
     "dbPath": "./images.db",
     "compression": {
@@ -13,8 +13,9 @@
         "expirCache": 30
     },
     "auth": {
-        "enable": true,
+        "enable": false,
         "login": "admin",
         "password": "admin"
-    }
+    },
+    "logMode": "dev"
 }

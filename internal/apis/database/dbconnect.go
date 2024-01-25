@@ -1,6 +1,7 @@
 package database
 
 import (
+	"go.uber.org/zap"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -12,7 +13,9 @@ type Images struct {
 	YDim     uint   `gorm:"column:ydim"`
 }
 
-func ConnectDb(dbPath string) (*gorm.DB, error) {
+func ConnectDb(dbPath string, logger *zap.Logger) (*gorm.DB, error) {
+	logger.Debug("Connecting to database", zap.String("dbPath", dbPath))
+
 	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
 	if err != nil {
 		return nil, err
