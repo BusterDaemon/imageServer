@@ -89,6 +89,26 @@ func specificImage(ctx *fiber.Ctx) error {
 	return ctx.SendFile(image.FilePath, true)
 }
 
+func imageInfo(ctx *fiber.Ctx) error {
+	var image database.Images
+
+	sId := ctx.Query("id", "0")
+
+	id, err := strconv.ParseUint(sId, 10, 64)
+	if err != nil {
+		return ctx.SendStatus(http.StatusInternalServerError)
+	}
+
+	image, err = database.SelectSpecificImage(globConf.DBPath, database.SelectParams{
+		Id: uint(id),
+	})
+	if err != nil {
+		return ctx.SendStatus(http.StatusNotFound)
+	}
+
+	return ctx.JSON(image)
+}
+
 func searchFile(ctx *fiber.Ctx) error {
 	substr := ctx.Query("name", "")
 	sXdim := ctx.Query("xdim", "0")

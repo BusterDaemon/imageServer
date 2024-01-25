@@ -8,23 +8,38 @@ import (
 	_ "image/png"
 	"os"
 
+	"go.uber.org/zap"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
-func InsertRecords(dbPath string, filesPath []string) error {
+func InsertRecords(dbPath string, filesPath []string, logger *zap.Logger) error {
+	logger.Debug("Connecting to database", zap.String("dbPath", dbPath))
+
 	conn, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
 	if err != nil {
 		return err
 	}
 
+	logger.Debug("Iterating through array", zap.Strings("filesPath", filesPath))
 	for _, file := range filesPath {
-		var image Images
+		var (
+			image Images
+		)
 
-		err = conn.Where("file_path = ?", file).Error
-		if err == nil && !errors.Is(err, gorm.ErrRecordNotFound) {
+		err = conn.Where("file_path = ?", file).First(&image).Error
+		if !errors.Is(err, gorm.ErrRecordNotFound) {
+
+			logger.Debug("File exists, skipping...",
+				zap.String("file", file),
+			)
+
 			continue
 		}
+
+		logger.Debug("Getting the bounds of image",
+			zap.String("file", file),
+		)
 
 		image.FilePath = file
 		x, y, err := GetBounds(image.FilePath)
@@ -35,7 +50,16 @@ func InsertRecords(dbPath string, filesPath []string) error {
 		image.XDim = x
 		image.YDim = y
 
-		conn.FirstOrCreate(&image, "file_path = ?", file)
+		logger.Debug("Adding image into database",
+			zap.Any("image", image),
+			zap.String("dbPath", dbPath),
+		)
+
+		rowsAff := conn.FirstOrCreate(&image, "file_path = ?", file).RowsAffected
+
+		logger.Debug("Rows affected",
+			zap.Int64("rowsAff", rowsAff),
+		)
 	}
 
 	return nil

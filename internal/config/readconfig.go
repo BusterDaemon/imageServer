@@ -24,6 +24,7 @@ type Config struct {
 		Login    string `json:"login"`
 		Password string `json:"password"`
 	} `json:"auth"`
+	LogMode string `json:"logMode"`
 }
 
 func ReadConfig(configPath string) (Config, error) {
