@@ -6,11 +6,11 @@ import (
 )
 
 type Config struct {
-	Address     string `json:"address"`
-	Port        uint16 `json:"port"`
-	RootFolder  string `json:"rootFolder"`
-	AllowGifs   bool   `json:"allowGifs"`
-	DBPath      string `json:"dbPath"`
+	Address     string   `json:"address"`
+	Port        uint16   `json:"port"`
+	RootFolder  []string `json:"rootFolder"`
+	AllowGifs   bool     `json:"allowGifs"`
+	DBPath      string   `json:"dbPath"`
 	Compression struct {
 		UseCompression bool  `json:"useCompression"`
 		CompressionLvl uint8 `json:"compLevel"`
@@ -25,7 +25,10 @@ type Config struct {
 		Login    string `json:"login"`
 		Password string `json:"password"`
 	} `json:"auth"`
-	LogMode string `json:"logMode"`
+	Logger struct {
+		LogMode     string `json:"logMode"`
+		LogRequests bool   `json:"logRequests"`
+	} `json:"logger"`
 }
 
 func ReadConfig(configPath string) (Config, error) {

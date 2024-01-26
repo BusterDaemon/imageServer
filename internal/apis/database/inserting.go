@@ -13,6 +13,38 @@ import (
 	"gorm.io/gorm"
 )
 
+func InsertClientReqRecord(dbPath string, data ClientReqs, logger *zap.Logger) error {
+	logger.Debug(
+		"Connecting to database",
+		zap.String("dbPath", dbPath),
+	)
+
+	conn, err := gorm.Open(sqlite.Open(dbPath))
+	if err != nil {
+		logger.Error(
+			"Error has occured",
+			zap.Error(err),
+		)
+		return err
+	}
+
+	logger.Debug(
+		"Trying to insert log into database",
+		zap.Any("clientData", data),
+	)
+
+	err = conn.Create(data).Error
+	if err != nil {
+		logger.Error(
+			"Error has occured",
+			zap.Error(err),
+		)
+		return err
+	}
+
+	return nil
+}
+
 func InsertRecords(dbPath string, filesPath []string, logger *zap.Logger) error {
 	logger.Debug(
 		"Connecting to database",

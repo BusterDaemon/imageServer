@@ -1,6 +1,7 @@
 package apis
 
 import (
+	"buster_daemon/imageserver/internal/apis/database"
 	"buster_daemon/imageserver/internal/config"
 	"fmt"
 	"net"
@@ -51,6 +52,25 @@ func Start(cnf *config.Config, zapper *zap.Logger) {
 				cnf.Auth.Login: cnf.Auth.Password,
 			},
 		}))
+	}
+
+	if cnf.Logger.LogRequests {
+		app.Use(func(ctx *fiber.Ctx) error {
+			database.InsertClientReqRecord(
+				cnf.DBPath,
+				database.ClientReqs{
+					Time:    time.Now(),
+					Ip:      ctx.IP(),
+					Url:     string(ctx.Request().URI().PathOriginal()),
+					Queries: string(ctx.Context().URI().QueryString()),
+					Ua:      string(ctx.Context().UserAgent()),
+					Status:  ctx.Response().Header.StatusCode(),
+					Method:  string(ctx.Request().Header.Method()),
+				},
+				globLogger,
+			)
+			return ctx.Next()
+		})
 	}
 
 	if cnf.Cache.UseCache {
