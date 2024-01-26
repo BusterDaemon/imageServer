@@ -30,7 +30,7 @@ func main() {
 		logger, _ = zap.NewProduction()
 	default:
 		logger, _ = zap.NewProduction()
-	}	
+	}		
 
 	logger.Info("Connecting to SQLite DB", zap.String("path", conf.DBPath))
 	_, err = database.ConnectDb(conf.DBPath, logger)

@@ -14,10 +14,17 @@ type Images struct {
 }
 
 func ConnectDb(dbPath string, logger *zap.Logger) (*gorm.DB, error) {
-	logger.Debug("Connecting to database", zap.String("dbPath", dbPath))
+	logger.Debug(
+		"Connecting to database",
+		zap.String("dbPath", dbPath),
+	)
 
 	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
 	if err != nil {
+		logger.Error(
+			"Can't connect to database",
+			zap.Error(err),
+		)
 		return nil, err
 	}
 	db.AutoMigrate(&Images{})

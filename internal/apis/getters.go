@@ -48,7 +48,9 @@ func getRandFile(ctx *fiber.Ctx) error {
 		Ydim:      uint(ydim),
 		YCompar:   uint8(yCompar),
 		Landscape: uint8(landscape),
-	})
+	},
+		globLogger,
+	)
 	if err != nil {
 		log.Println(err)
 		return ctx.SendStatus(http.StatusInternalServerError)
@@ -78,7 +80,9 @@ func specificImage(ctx *fiber.Ctx) error {
 		Id:         uint(id),
 		Name:       name,
 		ComparMode: uint8(comp),
-	})
+	},
+		globLogger,
+	)
 	if err != nil {
 		ctx.SendStatus(http.StatusNotFound)
 	}
@@ -101,7 +105,9 @@ func imageInfo(ctx *fiber.Ctx) error {
 
 	image, err = database.SelectSpecificImage(globConf.DBPath, database.SelectParams{
 		Id: uint(id),
-	})
+	},
+		globLogger,
+	)
 	if err != nil {
 		return ctx.SendStatus(http.StatusNotFound)
 	}
@@ -164,7 +170,9 @@ func searchFile(ctx *fiber.Ctx) error {
 		SortOrder: uint8(sortOrd),
 		Limit:     uint(pageSize),
 		Offset:    uint(offset),
-	})
+	},
+		globLogger,
+	)
 	if err != nil {
 		return ctx.SendStatus(http.StatusNotFound)
 	}

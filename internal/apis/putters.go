@@ -31,7 +31,8 @@ func startNonExistScan(ctx *fiber.Ctx) error {
 
 	conn, err := gorm.Open(sqlite.Open(globConf.DBPath))
 	if err != nil {
-		globLogger.Info("Connecting to database failed",
+		globLogger.Error(
+			"Connecting to database failed",
 			zap.Error(err),
 		)
 
@@ -43,7 +44,8 @@ func startNonExistScan(ctx *fiber.Ctx) error {
 		Error
 
 	if err != nil {
-		globLogger.Info("Error has occured",
+		globLogger.Error(
+			"Error has occured",
 			zap.Error(err),
 		)
 
@@ -55,19 +57,26 @@ func startNonExistScan(ctx *fiber.Ctx) error {
 			for _, file := range files {
 				_, err := os.Stat(file)
 				if errors.Is(err, os.ErrNotExist) {
-					globLogger.Debug("File is not exist, trying to delete it from database",
+					globLogger.Debug(
+						"File is not exist, trying to delete it from database",
 						zap.String("file", file),
 						zap.String("database", globConf.DBPath),
 					)
 
-					err = database.DeleteRecord(globConf.DBPath,
+					err = database.DeleteRecord(
+						globConf.DBPath,
 						database.DeleteOptions{
 							Id:       0,
 							FilePath: file,
-						})
+						},
+						globLogger,
+					)
 
 					if err != nil {
-						globLogger.Info("Can't delete record from database", zap.Error(err))
+						globLogger.Error(
+							"Can't delete record from database",
+							zap.Error(err),
+						)
 					}
 				}
 			}
