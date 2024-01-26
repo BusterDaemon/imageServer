@@ -10,7 +10,11 @@
     },
     "caching": {
         "useCache": true,
-        "expirCache": 30
+        "expirCache": 30,
+        "whitelistTypes": [
+            "application/json",
+            "text/plain"
+        ]
     },
     "auth": {
         "enable": false,
