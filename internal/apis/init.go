@@ -61,14 +61,9 @@ func Start(cnf *config.Config, zapper *zap.Logger) {
 				return true
 			}
 
-			wlContent := []string{
-				"application/json",
-				"text/plain",
-			}
-
 			cType := ctx.GetRespHeader("Content-Type")
 
-			for _, s := range wlContent {
+			for _, s := range globConf.Cache.WhitelistResp {
 				if strings.Contains(cType, s) {
 					zapper.Debug("Content type is in whitelist, skipping caching...")
 					return true

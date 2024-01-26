@@ -16,8 +16,9 @@ type Config struct {
 		CompressionLvl uint8 `json:"compLevel"`
 	} `json:"compression"`
 	Cache struct {
-		UseCache bool `json:"useCache"`
-		ExpCache uint `json:"expirCache"`
+		UseCache      bool     `json:"useCache"`
+		ExpCache      uint     `json:"expirCache"`
+		WhitelistResp []string `json:"whitelistTypes"`
 	} `json:"caching"`
 	Auth struct {
 		Enable   bool   `json:"enable"`
