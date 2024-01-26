@@ -57,17 +57,16 @@ func Start(cnf *config.Config, zapper *zap.Logger) {
 		c := cache.ConfigDefault
 		c.Expiration = time.Duration(cnf.Cache.ExpCache) * time.Second
 		c.Next = func(ctx *fiber.Ctx) bool {
+			if ctx.Query("noCache") == "true" {
+				return true
+			}
+
 			wlContent := []string{
 				"application/json",
 				"text/plain",
 			}
 
 			cType := ctx.GetRespHeader("Content-Type")
-			zapper.Debug("Response content type is", zap.String(cType, "Content-Type"))
-
-			if ctx.Query("noCache") == "true" {
-				return true
-			}
 
 			for _, s := range wlContent {
 				if strings.Contains(cType, s) {

@@ -14,14 +14,21 @@ import (
 )
 
 func InsertRecords(dbPath string, filesPath []string, logger *zap.Logger) error {
-	logger.Debug("Connecting to database", zap.String("dbPath", dbPath))
+	logger.Debug(
+		"Connecting to database",
+		zap.String("dbPath", dbPath),
+	)
 
 	conn, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
 	if err != nil {
 		return err
 	}
 
-	logger.Debug("Iterating through array", zap.Strings("filesPath", filesPath))
+	logger.Debug(
+		"Iterating through array",
+		zap.Strings("filesPath", filesPath),
+	)
+
 	for _, file := range filesPath {
 		var (
 			image Images
@@ -30,14 +37,16 @@ func InsertRecords(dbPath string, filesPath []string, logger *zap.Logger) error 
 		err = conn.Where("file_path = ?", file).First(&image).Error
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 
-			logger.Debug("File exists, skipping...",
+			logger.Debug(
+				"File exists, skipping...",
 				zap.String("file", file),
 			)
 
 			continue
 		}
 
-		logger.Debug("Getting the bounds of image",
+		logger.Debug(
+			"Getting the bounds of image",
 			zap.String("file", file),
 		)
 
@@ -50,16 +59,26 @@ func InsertRecords(dbPath string, filesPath []string, logger *zap.Logger) error 
 		image.XDim = x
 		image.YDim = y
 
-		logger.Debug("Adding image into database",
+		logger.Debug(
+			"Adding image into database",
 			zap.Any("image", image),
 			zap.String("dbPath", dbPath),
 		)
 
 		rowsAff := conn.FirstOrCreate(&image, "file_path = ?", file).RowsAffected
 
-		logger.Debug("Rows affected",
-			zap.Int64("rowsAff", rowsAff),
-		)
+		if rowsAff > 0 {
+			logger.Debug(
+				"Rows affected",
+				zap.Int64("rowsAff", rowsAff),
+			)
+		} else {
+			logger.Debug(
+				"No rows was added",
+				zap.Int64("rowsAff", rowsAff),
+			)
+		}
+
 	}
 
 	return nil
