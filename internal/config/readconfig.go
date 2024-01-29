@@ -6,11 +6,19 @@ import (
 )
 
 type Config struct {
-	Address     string   `json:"address"`
-	Port        uint16   `json:"port"`
-	RootFolder  []string `json:"rootFolder"`
-	AllowGifs   bool     `json:"allowGifs"`
-	DBPath      string   `json:"dbPath"`
+	Address    string   `json:"address"`
+	Port       uint16   `json:"port"`
+	RootFolder []string `json:"rootFolder"`
+	AllowGifs  bool     `json:"allowGifs"`
+	Database   struct {
+		DbType     string `json:"dbType"`
+		DbAddress  string `json:"dbAddress"`
+		DbPort     uint   `json:"dbPort"`
+		DbSSL      string `json:"dbSSL"`
+		DbLogin    string `json:"dbLogin"`
+		DbPassword string `json:"dbPassword"`
+		DbName     string `json:"dbName"`
+	} `json:"database"`
 	Compression struct {
 		UseCompression bool  `json:"useCompression"`
 		CompressionLvl uint8 `json:"compLevel"`

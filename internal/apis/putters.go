@@ -2,6 +2,7 @@ package apis
 
 import (
 	"buster_daemon/imageserver/internal/apis/database"
+	"buster_daemon/imageserver/internal/config"
 	"buster_daemon/imageserver/internal/filelist"
 	"errors"
 	"net/http"
@@ -9,18 +10,25 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
 func startNewScan(ctx *fiber.Ctx) error {
-	fl, err := filelist.GetFileList(globConf.RootFolder, "", globConf.AllowGifs)
+	db := ctx.Locals("db").(*gorm.DB)
+	logger := ctx.Locals("logger").(*zap.Logger)
+	conf := ctx.Locals("conf").(*config.Config)
+
+	fl, err := filelist.GetFileList(conf.RootFolder, "", conf.AllowGifs)
 	if err != nil {
 		ctx.SendStatus(http.StatusInternalServerError)
 		return err
 	}
 
-	go database.InsertRecords(globConf.DBPath, fl, globLogger)
+	go database.InsertRecords(
+		db,
+		fl,
+		logger,
+	)
 	return ctx.SendStatus(http.StatusAccepted)
 }
 
@@ -28,23 +36,15 @@ func startNonExistScan(ctx *fiber.Ctx) error {
 	var (
 		filePaths []string
 	)
+	db := ctx.Locals("db").(*gorm.DB)
+	logger := ctx.Locals("logger").(*zap.Logger)
 
-	conn, err := gorm.Open(sqlite.Open(globConf.DBPath))
-	if err != nil {
-		globLogger.Error(
-			"Connecting to database failed",
-			zap.Error(err),
-		)
-
-		return ctx.SendStatus(http.StatusInternalServerError)
-	}
-
-	err = conn.Model(&database.Images{}).
+	err := db.Model(&database.Images{}).
 		Pluck("file_path", &filePaths).
 		Error
 
 	if err != nil {
-		globLogger.Error(
+		logger.Error(
 			"Error has occured",
 			zap.Error(err),
 		)
@@ -53,33 +53,21 @@ func startNonExistScan(ctx *fiber.Ctx) error {
 	}
 
 	if len(filePaths) > 0 {
-		go func(files []string) {
-			for _, file := range files {
-				_, err := os.Stat(file)
-				if errors.Is(err, os.ErrNotExist) {
-					globLogger.Debug(
-						"File is not exist, trying to delete it from database",
-						zap.String("file", file),
-						zap.String("database", globConf.DBPath),
-					)
-
-					err = database.DeleteRecord(
-						globConf.DBPath,
+		go func(files []string) error {
+			for _, f := range files {
+				_, err := os.Stat(f)
+				if err != nil && errors.Is(err, os.ErrNotExist) {
+					database.DeleteRecord(
+						db,
 						database.DeleteOptions{
 							Id:       0,
-							FilePath: file,
+							FilePath: f,
 						},
-						globLogger,
+						logger,
 					)
-
-					if err != nil {
-						globLogger.Error(
-							"Can't delete record from database",
-							zap.Error(err),
-						)
-					}
 				}
 			}
+			return nil
 		}(filePaths)
 	}
 	return ctx.SendStatus(http.StatusAccepted)

@@ -11,10 +11,14 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"go.uber.org/zap"
 	"gorm.io/gorm"
 )
 
 func getRandFile(ctx *fiber.Ctx) error {
+	db := ctx.Locals("db").(*gorm.DB)
+	logger := ctx.Locals("logger").(*zap.Logger)
+
 	name := ctx.Query("name", "")
 	sLandscape := ctx.Query("orientation", "0")
 	sXdim := ctx.Query("xdim", "0")
@@ -43,15 +47,17 @@ func getRandFile(ctx *fiber.Ctx) error {
 	if err != nil {
 		return ctx.SendStatus(http.StatusInternalServerError)
 	}
-	f, err := database.SelectRandomFile(globConf.DBPath, database.RandomParams{
-		Substring: name,
-		Xdim:      uint(xdim),
-		XCompar:   uint8(xCompar),
-		Ydim:      uint(ydim),
-		YCompar:   uint8(yCompar),
-		Landscape: uint8(landscape),
-	},
-		globLogger,
+	f, err := database.SelectRandomFile(
+		db,
+		database.RandomParams{
+			Substring: name,
+			Xdim:      uint(xdim),
+			XCompar:   uint8(xCompar),
+			Ydim:      uint(ydim),
+			YCompar:   uint8(yCompar),
+			Landscape: uint8(landscape),
+		},
+		logger,
 	)
 	if err != nil {
 		log.Println(err)
@@ -68,6 +74,9 @@ func getRandFile(ctx *fiber.Ctx) error {
 }
 
 func specificImage(ctx *fiber.Ctx) error {
+	db := ctx.Locals("db").(*gorm.DB)
+	logger := ctx.Locals("logger").(*zap.Logger)
+
 	name := ctx.Query("name", "")
 	sId := ctx.Query("id", "1")
 	sComp := ctx.Query("selects", "0")
@@ -81,12 +90,14 @@ func specificImage(ctx *fiber.Ctx) error {
 		return ctx.SendStatus(http.StatusInternalServerError)
 	}
 
-	image, err := database.SelectSpecificImage(globConf.DBPath, database.SelectParams{
-		Id:         uint(id),
-		Name:       name,
-		ComparMode: uint8(comp),
-	},
-		globLogger,
+	image, err := database.SelectSpecificImage(
+		db,
+		database.SelectParams{
+			Id:         uint(id),
+			Name:       name,
+			ComparMode: uint8(comp),
+		},
+		logger,
 	)
 	if err != nil {
 		ctx.SendStatus(http.StatusNotFound)
@@ -101,6 +112,9 @@ func specificImage(ctx *fiber.Ctx) error {
 func imageInfo(ctx *fiber.Ctx) error {
 	var image database.Images
 
+	db := ctx.Locals("db").(*gorm.DB)
+	logger := ctx.Locals("logger").(*zap.Logger)
+
 	sId := ctx.Query("id", "0")
 
 	id, err := strconv.ParseUint(sId, 10, 64)
@@ -108,10 +122,12 @@ func imageInfo(ctx *fiber.Ctx) error {
 		return ctx.SendStatus(http.StatusInternalServerError)
 	}
 
-	image, err = database.SelectSpecificImage(globConf.DBPath, database.SelectParams{
-		Id: uint(id),
-	},
-		globLogger,
+	image, err = database.SelectSpecificImage(
+		db,
+		database.SelectParams{
+			Id: uint(id),
+		},
+		logger,
 	)
 	if err != nil {
 		return ctx.SendStatus(http.StatusNotFound)
@@ -121,6 +137,9 @@ func imageInfo(ctx *fiber.Ctx) error {
 }
 
 func searchFile(ctx *fiber.Ctx) error {
+	db := ctx.Locals("db").(*gorm.DB)
+	logger := ctx.Locals("logger").(*zap.Logger)
+
 	substr := ctx.Query("name", "")
 	sXdim := ctx.Query("xdim", "0")
 	sYdim := ctx.Query("ydim", "0")
@@ -165,18 +184,20 @@ func searchFile(ctx *fiber.Ctx) error {
 	}
 	offset := (page - 1) * pageSize
 
-	images, totalImages, err := database.SearchImages(globConf.DBPath, database.SearchParams{
-		Substring: substr,
-		Xdim:      uint(xdim),
-		XCompar:   uint8(xCompar),
-		Ydim:      uint(ydim),
-		YCompar:   uint8(yCompar),
-		Landscape: uint8(landscape),
-		SortOrder: uint8(sortOrd),
-		Limit:     uint(pageSize),
-		Offset:    uint(offset),
-	},
-		globLogger,
+	images, totalImages, err := database.SearchImages(
+		db,
+		database.SearchParams{
+			Substring: substr,
+			Xdim:      uint(xdim),
+			XCompar:   uint8(xCompar),
+			Ydim:      uint(ydim),
+			YCompar:   uint8(yCompar),
+			Landscape: uint8(landscape),
+			SortOrder: uint8(sortOrd),
+			Limit:     uint(pageSize),
+			Offset:    uint(offset),
+		},
+		logger,
 	)
 	if err != nil {
 		return ctx.SendStatus(http.StatusNotFound)

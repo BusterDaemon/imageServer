@@ -1,9 +1,13 @@
 package database
 
 import (
+	"buster_daemon/imageserver/internal/config"
+	"fmt"
 	"time"
 
 	"go.uber.org/zap"
+	"gorm.io/driver/mysql"
+	"gorm.io/driver/postgres"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
@@ -27,13 +31,49 @@ type ClientReqs struct {
 	Method  string    `gorm:"column:client_method"`
 }
 
-func ConnectDb(dbPath string, logger *zap.Logger) (*gorm.DB, error) {
+func ConnectDb(config config.Config, logger *zap.Logger) (*gorm.DB, error) {
+	var (
+		dbDriver gorm.Dialector
+	)
 	logger.Debug(
 		"Connecting to database",
-		zap.String("dbPath", dbPath),
+		zap.Any("dbPath", config.Database),
 	)
 
-	db, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
+	switch config.Database.DbType {
+	case "sqlite":
+		dbDriver = sqlite.Open(config.Database.DbAddress)
+	case "mysql":
+		dbDriver = mysql.New(
+			mysql.Config{
+				DSN: fmt.Sprintf(
+					"%s:%s@tcp(%s:%d)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+					config.Database.DbLogin,
+					config.Database.DbPassword,
+					config.Database.DbAddress,
+					config.Database.DbPort,
+					config.Database.DbName,
+				),
+				DefaultStringSize: 256,
+			},
+		)
+	case "postgres":
+		dbDriver = postgres.New(
+			postgres.Config{
+				DSN: fmt.Sprintf(
+					"host=%s user=%s password=%s dbname=%s port=%d sslmode=%s",
+					config.Database.DbAddress,
+					config.Database.DbLogin,
+					config.Database.DbPassword,
+					config.Database.DbName,
+					config.Database.DbPort,
+					config.Database.DbSSL,
+				),
+			},
+		)
+	}
+
+	db, err := gorm.Open(dbDriver, &gorm.Config{})
 	if err != nil {
 		logger.Error(
 			"Can't connect to database",

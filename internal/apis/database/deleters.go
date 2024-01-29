@@ -4,7 +4,6 @@ import (
 	"errors"
 
 	"go.uber.org/zap"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
@@ -14,26 +13,8 @@ type DeleteOptions struct {
 	UseAnd   bool
 }
 
-func DeleteRecord(dbPath string, delOptions DeleteOptions, logger *zap.Logger) error {
-	var (
-		conn *gorm.DB
-		err  error
-	)
-
-	logger.Debug(
-		"Connecting to database",
-		zap.String("dbPath", dbPath),
-	)
-
-	if conn, err = gorm.Open(sqlite.Open(dbPath)); err != nil {
-		logger.Error(
-			"Can't connect to database",
-			zap.Error(err),
-		)
-		return err
-	}
-
-	res := conn.Model(&Images{})
+func DeleteRecord(db *gorm.DB, delOptions DeleteOptions, logger *zap.Logger) error {
+	res := db.Model(&Images{})
 
 	logger.Debug(
 		"Trying to delete record from database with parameters",
