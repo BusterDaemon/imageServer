@@ -18,7 +18,8 @@ func main() {
 
 	defer logger.Sync()
 
-	conf, err := config.ReadConfig(confPath)
+	conf := config.New()
+	err := (&conf).ReadConfig(confPath)
 	if err != nil {
 		panic(err)
 	}
