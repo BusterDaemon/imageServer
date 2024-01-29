@@ -110,7 +110,7 @@ func GetBounds(path string) (imageData, error) {
 	}
 	defer f.Close()
 
-	m, _, err := image.Decode(f)
+	m, _, err := image.DecodeConfig(f)
 	if err != nil {
 		return imageData{}, err
 	}
@@ -121,8 +121,8 @@ func GetBounds(path string) (imageData, error) {
 	}
 
 	return imageData{
-		xdim:         uint(m.Bounds().Dx()),
-		ydim:         uint(m.Bounds().Dy()),
+		xdim:         uint(m.Width),
+		ydim:         uint(m.Height),
 		dateCreated:  fInfo.ChangeTime(),
 		dateModified: fInfo.ModTime(),
 	}, nil
