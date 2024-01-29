@@ -31,18 +31,21 @@ type Config struct {
 	} `json:"logger"`
 }
 
-func ReadConfig(configPath string) (Config, error) {
+func New() Config {
+	return Config{}
+}
+
+func (c *Config) ReadConfig(configPath string) error {
 	f, err := os.OpenFile(configPath, os.O_RDONLY, 0765)
 	if err != nil {
-		return Config{}, err
+		return err
 	}
 	defer f.Close()
-	var conf Config
 
 	decoder := json.NewDecoder(f)
-	decoder.Decode(&conf)
-	if conf.Cache.ExpCache > 3600 {
-		conf.Cache.ExpCache = 30
+	decoder.Decode(c)
+	if c.Cache.ExpCache > 3600 {
+		c.Cache.ExpCache = 30
 	}
-	return conf, nil
+	return nil
 }
