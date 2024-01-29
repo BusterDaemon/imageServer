@@ -56,24 +56,6 @@ func Start(cnf *config.Config, db *gorm.DB, zapper *zap.Logger) {
 		}))
 	}
 
-	if cnf.Logger.LogRequests {
-		app.Use(func(ctx *fiber.Ctx) error {
-			database.InsertClientReqRecord(
-				db,
-				database.ClientReqs{
-					Time:    time.Now(),
-					Ip:      ctx.IP(),
-					Url:     string(ctx.Request().URI().PathOriginal()),
-					Queries: string(ctx.Context().URI().QueryString()),
-					Ua:      string(ctx.Context().UserAgent()),
-					Method:  string(ctx.Request().Header.Method()),
-				},
-				zapper,
-			)
-			return ctx.Next()
-		})
-	}
-
 	if cnf.Cache.UseCache {
 		c := cache.ConfigDefault
 		c.Expiration = time.Duration(cnf.Cache.ExpCache) * time.Second
@@ -105,6 +87,27 @@ func Start(cnf *config.Config, db *gorm.DB, zapper *zap.Logger) {
 				Level: compress.Level(cnf.Compression.CompressionLvl),
 			},
 		))
+	}
+
+	if cnf.Logger.LogRequests {
+		app.Use(func(ctx *fiber.Ctx) error {
+			err := ctx.Next()
+
+			database.InsertClientReqRecord(
+				db,
+				database.ClientReqs{
+					Time:       time.Now(),
+					Ip:         ctx.IP(),
+					Url:        string(ctx.Request().URI().PathOriginal()),
+					Queries:    string(ctx.Context().URI().QueryString()),
+					Ua:         string(ctx.Context().UserAgent()),
+					Method:     string(ctx.Request().Header.Method()),
+					StatusCode: ctx.Response().StatusCode(),
+				},
+				zapper,
+			)
+			return err
+		})
 	}
 
 	getters.Use(etag.New(etag.ConfigDefault))
