@@ -123,7 +123,14 @@ func SelectRandomFile(db *gorm.DB, params RandomParams, logger *zap.Logger) (str
 		res = res.Where("xdim <= ydim")
 	}
 
-	err := res.Order("RANDOM()").First(&image).Error
+	switch db.Dialector.Name() {
+	case "mysql":
+		res = res.Order("RAND()")
+	default:
+		res = res.Order("RANDOM()")
+	}
+
+	err := res.First(&image).Error
 	if err != nil {
 		logger.Error(
 			"Error has occured",
