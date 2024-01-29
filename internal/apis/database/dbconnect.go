@@ -21,7 +21,6 @@ type ClientReqs struct {
 	Url     string    `gorm:"column:client_url"`
 	Queries string    `gorm:"column:client_queries"`
 	Ua      string    `gorm:"column:client_ua"`
-	Status  int       `gorm:"column:client_status"`
 	Method  string    `gorm:"column:client_method"`
 }
 

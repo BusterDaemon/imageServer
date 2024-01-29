@@ -64,7 +64,6 @@ func Start(cnf *config.Config, zapper *zap.Logger) {
 					Url:     string(ctx.Request().URI().PathOriginal()),
 					Queries: string(ctx.Context().URI().QueryString()),
 					Ua:      string(ctx.Context().UserAgent()),
-					Status:  ctx.Response().Header.StatusCode(),
 					Method:  string(ctx.Request().Header.Method()),
 				},
 				globLogger,
