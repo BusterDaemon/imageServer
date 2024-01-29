@@ -2,11 +2,18 @@
     "port": 9150,
     "address": "0.0.0.0",
     "rootFolder": [
-        "/home/busterd/Vaults",
-        "/home/busterd/Pictures/Wallpapers"
+        "/app/images"
     ],
     "allowGifs": true,
-    "dbPath": "./images.db",
+    "database": {
+        "dbType": "sqlite",
+        "dbAddress": "./images.db",
+        "dbPort": 5432,
+        "dbSSL": "disable",
+        "dbLogin": "imserver",
+        "dbPassword": "imserver",
+        "dbName": "imserver"
+    },
     "compression": {
         "useCompression": true,
         "compLevel": 2
