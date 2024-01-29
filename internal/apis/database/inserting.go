@@ -7,11 +7,20 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 	"os"
+	"time"
 
+	"github.com/djherbis/times"
 	"go.uber.org/zap"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
+
+type imageData struct {
+	xdim         uint
+	ydim         uint
+	dateCreated  time.Time
+	dateModified time.Time
+}
 
 func InsertClientReqRecord(dbPath string, data ClientReqs, logger *zap.Logger) error {
 	logger.Debug(
@@ -83,13 +92,16 @@ func InsertRecords(dbPath string, filesPath []string, logger *zap.Logger) error 
 		)
 
 		image.FilePath = file
-		x, y, err := GetBounds(image.FilePath)
+		imageData, err := GetBounds(image.FilePath)
 		if err != nil {
 			return err
 		}
 
-		image.XDim = x
-		image.YDim = y
+		image.DateAdded = time.Now()
+		image.DateCreated = imageData.dateCreated
+		image.DateModified = imageData.dateModified
+		image.XDim = imageData.xdim
+		image.YDim = imageData.ydim
 
 		logger.Debug(
 			"Adding image into database",
@@ -116,17 +128,27 @@ func InsertRecords(dbPath string, filesPath []string, logger *zap.Logger) error 
 	return nil
 }
 
-func GetBounds(path string) (uint, uint, error) {
+func GetBounds(path string) (imageData, error) {
 	f, err := os.OpenFile(path, os.O_RDONLY, 0765)
 	if err != nil {
-		return 0, 0, err
+		return imageData{}, err
 	}
 	defer f.Close()
 
 	m, _, err := image.Decode(f)
 	if err != nil {
-		return 0, 0, err
+		return imageData{}, err
 	}
 
-	return uint(m.Bounds().Dx()), uint(m.Bounds().Dy()), nil
+	fInfo, err := times.Stat(path)
+	if err != nil {
+		return imageData{}, err
+	}
+
+	return imageData{
+		xdim:         uint(m.Bounds().Dx()),
+		ydim:         uint(m.Bounds().Dy()),
+		dateCreated:  fInfo.ChangeTime(),
+		dateModified: fInfo.ModTime(),
+	}, nil
 }

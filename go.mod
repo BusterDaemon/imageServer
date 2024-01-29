@@ -3,6 +3,7 @@ module buster_daemon/imageserver
 go 1.21
 
 require (
+	github.com/djherbis/times v1.6.0
 	github.com/gofiber/fiber/v2 v2.52.0
 	go.uber.org/zap v1.26.0
 	gorm.io/driver/sqlite v1.5.4

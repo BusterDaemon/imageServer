@@ -9,10 +9,13 @@ import (
 )
 
 type Images struct {
-	Id       uint   `gorm:"primaryKey,unique,not_null,autoIncrement,column:idi"`
-	FilePath string `gorm:"unique,not_null"`
-	XDim     uint   `gorm:"column:xdim"`
-	YDim     uint   `gorm:"column:ydim"`
+	Id           uint      `gorm:"primaryKey,unique,not_null,autoIncrement"`
+	FilePath     string    `gorm:"unique,not_null"`
+	XDim         uint      `gorm:"column:x_dim"`
+	YDim         uint      `gorm:"column:y_dim"`
+	DateAdded    time.Time `gorm:"column:added_at"`
+	DateCreated  time.Time `gorm:"column:created_at"`
+	DateModified time.Time `gorm:"column:modified_at"`
 }
 
 type ClientReqs struct {
