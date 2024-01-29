@@ -2,6 +2,7 @@ package apis
 
 import (
 	"buster_daemon/imageserver/internal/apis/database"
+	"errors"
 	"fmt"
 	"log"
 	"math"
@@ -10,6 +11,7 @@ import (
 	"strings"
 
 	"github.com/gofiber/fiber/v2"
+	"gorm.io/gorm"
 )
 
 func getRandFile(ctx *fiber.Ctx) error {
@@ -53,6 +55,9 @@ func getRandFile(ctx *fiber.Ctx) error {
 	)
 	if err != nil {
 		log.Println(err)
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return ctx.SendStatus(http.StatusNotFound)
+		}
 		return ctx.SendStatus(http.StatusInternalServerError)
 	}
 
