@@ -2,7 +2,6 @@ package database
 
 import (
 	"go.uber.org/zap"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
@@ -69,24 +68,10 @@ type SearchParams struct {
 	Offset    uint
 }
 
-func SelectRandomFile(dbPath string, params RandomParams, logger *zap.Logger) (string, error) {
+func SelectRandomFile(db *gorm.DB, params RandomParams, logger *zap.Logger) (string, error) {
 	var image Images
 
-	logger.Info(
-		"Connecting to database",
-		zap.String("dbPath", dbPath),
-	)
-
-	conn, err := gorm.Open(sqlite.Open(dbPath))
-	if err != nil {
-		logger.Error(
-			"Can't connect to database",
-			zap.Error(err),
-		)
-		return "", err
-	}
-
-	res := conn.Model(&image)
+	res := db.Model(&image)
 	if params.Substring != "" {
 		logger.Debug(
 			"Searching file with substring",
@@ -138,7 +123,7 @@ func SelectRandomFile(dbPath string, params RandomParams, logger *zap.Logger) (s
 		res = res.Where("xdim <= ydim")
 	}
 
-	err = res.Order("RANDOM()").First(&image).Error
+	err := res.Order("RANDOM()").First(&image).Error
 	if err != nil {
 		logger.Error(
 			"Error has occured",
@@ -155,23 +140,10 @@ func SelectRandomFile(dbPath string, params RandomParams, logger *zap.Logger) (s
 	return image.FilePath, nil
 }
 
-func SelectSpecificImage(dbPath string, params SelectParams, logger *zap.Logger) (Images, error) {
+func SelectSpecificImage(db *gorm.DB, params SelectParams, logger *zap.Logger) (Images, error) {
 	var image Images
 
-	logger.Info(
-		"Connecting to database",
-		zap.String("dbPath", dbPath),
-	)
-
-	conn, err := gorm.Open(sqlite.Open(dbPath))
-	if err != nil {
-		logger.Error(
-			"Error has occured",
-			zap.Error(err),
-		)
-		return Images{}, err
-	}
-	res := conn.Model(&image)
+	res := db.Model(&image)
 
 	logger.Debug(
 		"Searching image with parameters",
@@ -193,7 +165,7 @@ func SelectSpecificImage(dbPath string, params SelectParams, logger *zap.Logger)
 		res = res.Where("id = ?", params.Id)
 	}
 
-	err = res.First(&image).Error
+	err := res.First(&image).Error
 	if err != nil {
 		logger.Error(
 			"Error has occured",
@@ -209,7 +181,7 @@ func SelectSpecificImage(dbPath string, params SelectParams, logger *zap.Logger)
 	return image, nil
 }
 
-func SearchImages(dbPath string, params SearchParams, logger *zap.Logger) ([]Images, int64, error) {
+func SearchImages(db *gorm.DB, params SearchParams, logger *zap.Logger) ([]Images, int64, error) {
 	var (
 		images []Images
 		total  int64
@@ -220,26 +192,12 @@ func SearchImages(dbPath string, params SearchParams, logger *zap.Logger) ([]Ima
 		params.Limit = 10
 	}
 
-	logger.Info(
-		"Connecting to database",
-		zap.String("dbPath", dbPath),
-	)
-
-	conn, err := gorm.Open(sqlite.Open(dbPath))
-	if err != nil {
-		logger.Error(
-			"Error has occured",
-			zap.Error(err),
-		)
-		return nil, 0, err
-	}
-
 	logger.Debug(
 		"Searching image with parameters",
 		zap.Any("params", params),
 	)
 
-	res := conn.Model(&images)
+	res := db.Model(&images)
 	if params.Substring != "" {
 		res = res.Where("file_path LIKE ?", "%"+params.Substring+"%")
 	}
@@ -313,7 +271,7 @@ func SearchImages(dbPath string, params SearchParams, logger *zap.Logger) ([]Ima
 		order = "file_path ASC"
 	}
 
-	err = res.Count(&total).
+	err := res.Count(&total).
 		Limit(int(params.Limit)).
 		Offset(int(params.Offset)).
 		Order(order).

@@ -33,11 +33,11 @@ func main() {
 		logger, _ = zap.NewProduction()
 	}
 
-	logger.Info("Connecting to SQLite DB", zap.String("path", conf.DBPath))
-	_, err = database.ConnectDb(conf.DBPath, logger)
+	logger.Info("Connecting to Database", zap.Any("path", conf.Database))
+	db, err := database.ConnectDb(conf, logger)
 	if err != nil {
 		logger.Fatal("Can't connect to database", zap.Error(err))
 	}
 
-	apis.Start(&conf, logger)
+	apis.Start(&conf, db, logger)
 }

@@ -18,15 +18,10 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"go.uber.org/zap"
+	"gorm.io/gorm"
 )
 
-var globConf *config.Config
-var globLogger *zap.Logger
-
-func Start(cnf *config.Config, zapper *zap.Logger) {
-	globConf = cnf
-	globLogger = zapper
-
+func Start(cnf *config.Config, db *gorm.DB, zapper *zap.Logger) {
 	app := fiber.New()
 	api := app.Group("/api")
 	getters := api.Group("/get")
@@ -42,8 +37,15 @@ func Start(cnf *config.Config, zapper *zap.Logger) {
 		TimeInterval:  1 * time.Second,
 		Output:        os.Stdout,
 		DisableColors: false,
-	}))
-	api.Use(recover.New())
+	}),
+		recover.New(),
+		func(ctx *fiber.Ctx) error {
+			ctx.Locals("db", db)
+			ctx.Locals("conf", cnf)
+			ctx.Locals("logger", zapper)
+			return ctx.Next()
+		},
+	)
 
 	if cnf.Auth.Enable {
 		zapper.Debug("Enabling Basic Auth")
@@ -57,7 +59,7 @@ func Start(cnf *config.Config, zapper *zap.Logger) {
 	if cnf.Logger.LogRequests {
 		app.Use(func(ctx *fiber.Ctx) error {
 			database.InsertClientReqRecord(
-				cnf.DBPath,
+				db,
 				database.ClientReqs{
 					Time:    time.Now(),
 					Ip:      ctx.IP(),
@@ -66,7 +68,7 @@ func Start(cnf *config.Config, zapper *zap.Logger) {
 					Ua:      string(ctx.Context().UserAgent()),
 					Method:  string(ctx.Request().Header.Method()),
 				},
-				globLogger,
+				zapper,
 			)
 			return ctx.Next()
 		})
@@ -82,7 +84,7 @@ func Start(cnf *config.Config, zapper *zap.Logger) {
 
 			cType := ctx.GetRespHeader("Content-Type")
 
-			for _, s := range globConf.Cache.WhitelistResp {
+			for _, s := range cnf.Cache.WhitelistResp {
 				if strings.Contains(cType, s) {
 					zapper.Debug("Content type is in whitelist, skipping caching...")
 					return true
@@ -115,9 +117,9 @@ func Start(cnf *config.Config, zapper *zap.Logger) {
 	scanners.Put("/new", startNewScan)
 	scanners.Put("/old", startNonExistScan)
 
-	ln, err := net.Listen("tcp", fmt.Sprintf("%s:%d", globConf.Address, globConf.Port))
+	ln, err := net.Listen("tcp", fmt.Sprintf("%s:%d", cnf.Address, cnf.Port))
 	if err != nil {
-		zapper.Fatal("Can't open listener", zap.String("address", globConf.Address), zap.Uint16("port", globConf.Port))
+		zapper.Fatal("Can't open listener", zap.String("address", cnf.Address), zap.Uint16("port", cnf.Port))
 	}
 
 	zapper.Error("error", zap.Error(app.Listener(ln)))

@@ -11,7 +11,6 @@ import (
 
 	"github.com/djherbis/times"
 	"go.uber.org/zap"
-	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 )
 
@@ -22,27 +21,13 @@ type imageData struct {
 	dateModified time.Time
 }
 
-func InsertClientReqRecord(dbPath string, data ClientReqs, logger *zap.Logger) error {
-	logger.Debug(
-		"Connecting to database",
-		zap.String("dbPath", dbPath),
-	)
-
-	conn, err := gorm.Open(sqlite.Open(dbPath))
-	if err != nil {
-		logger.Error(
-			"Error has occured",
-			zap.Error(err),
-		)
-		return err
-	}
-
+func InsertClientReqRecord(db *gorm.DB, data ClientReqs, logger *zap.Logger) error {
 	logger.Debug(
 		"Trying to insert log into database",
 		zap.Any("clientData", data),
 	)
 
-	err = conn.Create(data).Error
+	err := db.Create(data).Error
 	if err != nil {
 		logger.Error(
 			"Error has occured",
@@ -54,17 +39,7 @@ func InsertClientReqRecord(dbPath string, data ClientReqs, logger *zap.Logger) e
 	return nil
 }
 
-func InsertRecords(dbPath string, filesPath []string, logger *zap.Logger) error {
-	logger.Debug(
-		"Connecting to database",
-		zap.String("dbPath", dbPath),
-	)
-
-	conn, err := gorm.Open(sqlite.Open(dbPath), &gorm.Config{})
-	if err != nil {
-		return err
-	}
-
+func InsertRecords(db *gorm.DB, filesPath []string, logger *zap.Logger) error {
 	logger.Debug(
 		"Iterating through array",
 		zap.Strings("filesPath", filesPath),
@@ -75,7 +50,7 @@ func InsertRecords(dbPath string, filesPath []string, logger *zap.Logger) error 
 			image Images
 		)
 
-		err = conn.Where("file_path = ?", file).First(&image).Error
+		err := db.Where("file_path = ?", file).First(&image).Error
 		if !errors.Is(err, gorm.ErrRecordNotFound) {
 
 			logger.Debug(
@@ -106,10 +81,10 @@ func InsertRecords(dbPath string, filesPath []string, logger *zap.Logger) error 
 		logger.Debug(
 			"Adding image into database",
 			zap.Any("image", image),
-			zap.String("dbPath", dbPath),
+			zap.Any("dbPath", *db),
 		)
 
-		rowsAff := conn.FirstOrCreate(&image, "file_path = ?", file).RowsAffected
+		rowsAff := db.FirstOrCreate(&image, "file_path = ?", file).RowsAffected
 
 		if rowsAff > 0 {
 			logger.Debug(
