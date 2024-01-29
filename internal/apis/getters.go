@@ -116,6 +116,7 @@ func imageInfo(ctx *fiber.Ctx) error {
 	logger := ctx.Locals("logger").(*zap.Logger)
 
 	sId := ctx.Query("id", "0")
+	sName := ctx.Query("name", "")
 
 	id, err := strconv.ParseUint(sId, 10, 64)
 	if err != nil {
@@ -125,7 +126,8 @@ func imageInfo(ctx *fiber.Ctx) error {
 	image, err = database.SelectSpecificImage(
 		db,
 		database.SelectParams{
-			Id: uint(id),
+			Id:   uint(id),
+			Name: sName,
 		},
 		logger,
 	)
