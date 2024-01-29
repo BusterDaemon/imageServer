@@ -81,10 +81,17 @@ func ConnectDb(config config.Config, logger *zap.Logger) (*gorm.DB, error) {
 		)
 		return nil, err
 	}
-	db.AutoMigrate(
+	err = db.AutoMigrate(
 		&Images{},
 		&ClientReqs{},
 	)
+	if err != nil {
+		logger.Error(
+			"Error has occured",
+			zap.Error(err),
+		)
+		return nil, err
+	}
 
 	return db, nil
 }
