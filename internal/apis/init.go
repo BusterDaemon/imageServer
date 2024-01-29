@@ -15,6 +15,7 @@ import (
 	"github.com/gofiber/fiber/v2/middleware/compress"
 	"github.com/gofiber/fiber/v2/middleware/etag"
 	"github.com/gofiber/fiber/v2/middleware/idempotency"
+	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/gofiber/fiber/v2/middleware/recover"
 	"go.uber.org/zap"
@@ -46,6 +47,27 @@ func Start(cnf *config.Config, db *gorm.DB, zapper *zap.Logger) {
 			return ctx.Next()
 		},
 	)
+
+	if cnf.RateLimiter.Enable {
+		api.Use(
+			limiter.New(
+				limiter.Config{
+					Max:        int(cnf.RateLimiter.MaxRecConns),
+					Expiration: time.Duration(cnf.RateLimiter.ExpirTime) * time.Minute,
+					Next: func(ctx *fiber.Ctx) bool {
+						if len(cnf.RateLimiter.WlIPs) > 0 {
+							for _, i := range cnf.RateLimiter.WlIPs {
+								if i == ctx.IP() {
+									return true
+								}
+							}
+						}
+						return false
+					},
+				},
+			),
+		)
+	}
 
 	if cnf.Auth.Enable {
 		zapper.Debug("Enabling Basic Auth")

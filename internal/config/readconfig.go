@@ -37,6 +37,12 @@ type Config struct {
 		LogMode     string `json:"logMode"`
 		LogRequests bool   `json:"logRequests"`
 	} `json:"logger"`
+	RateLimiter struct {
+		Enable      bool     `json:"enable"`
+		WlIPs       []string `json:"whiteListedIPs"`
+		MaxRecConns uint     `json:"maxRecConns"`
+		ExpirTime   uint     `json:"expirTimeMin"`
+	} `json:"rateLimiter"`
 }
 
 func New() Config {
