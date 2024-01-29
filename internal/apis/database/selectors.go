@@ -34,6 +34,12 @@ const (
 	XDIM_DESC
 	YDIM_ASC
 	YDIM_DESC
+	ADDTIME_ASC
+	ADDTIME_DESC
+	CTIME_ASC
+	CTIME_DESC
+	MTIME_ASC
+	MTIME_DESC
 )
 
 type RandomParams struct {
@@ -291,6 +297,18 @@ func SearchImages(dbPath string, params SearchParams, logger *zap.Logger) ([]Ima
 		order = "ydim ASC"
 	case YDIM_DESC:
 		order = "ydim DESC"
+	case ADDTIME_ASC:
+		order = "added_at ASC"
+	case ADDTIME_DESC:
+		order = "added_at DESC"
+	case CTIME_ASC:
+		order = "created_at ASC"
+	case CTIME_DESC:
+		order = "created_at DESC"
+	case MTIME_ASC:
+		order = "modified_at ASC"
+	case MTIME_DESC:
+		order = "modified_at DESC"
 	default:
 		order = "file_path ASC"
 	}
