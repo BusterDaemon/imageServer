@@ -23,12 +23,13 @@ type Images struct {
 }
 
 type ClientReqs struct {
-	Time    time.Time `gorm:"client_time_access"`
-	Ip      string    `gorm:"column:client_ip"`
-	Url     string    `gorm:"column:client_url"`
-	Queries string    `gorm:"column:client_queries"`
-	Ua      string    `gorm:"column:client_ua"`
-	Method  string    `gorm:"column:client_method"`
+	Time       time.Time `gorm:"client_time_access"`
+	Ip         string    `gorm:"column:client_ip"`
+	Url        string    `gorm:"column:client_url"`
+	Queries    string    `gorm:"column:client_queries"`
+	Ua         string    `gorm:"column:client_ua"`
+	Method     string    `gorm:"column:client_method"`
+	StatusCode int       `gorm:"column:client_status"`
 }
 
 func ConnectDb(config config.Config, logger *zap.Logger) (*gorm.DB, error) {
