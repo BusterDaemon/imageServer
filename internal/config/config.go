@@ -1,16 +1,22 @@
 package config
 
 import (
+	"bytes"
 	"encoding/json"
+	"io"
 	"os"
 )
 
 type Config struct {
-	Address    string   `json:"address"`
-	Port       uint16   `json:"port"`
-	RootFolder []string `json:"rootFolder"`
-	AllowGifs  bool     `json:"allowGifs"`
-	Database   struct {
+	Address    string `json:"address"`
+	Port       uint16 `json:"port"`
+	RootFolder string `json:"rootFolder"`
+	AllowGifs  bool   `json:"allowGifs"`
+	Signing    struct {
+		Type  string `json:"type"`
+		Value string `json:"value"`
+	} `json:"signingKey"`
+	Database struct {
 		DbType     string `json:"dbType"`
 		DbAddress  string `json:"dbAddress"`
 		DbPort     uint   `json:"dbPort"`
@@ -28,11 +34,6 @@ type Config struct {
 		ExpCache      uint     `json:"expirCache"`
 		WhitelistResp []string `json:"whitelistTypes"`
 	} `json:"caching"`
-	Auth struct {
-		Enable   bool   `json:"enable"`
-		Login    string `json:"login"`
-		Password string `json:"password"`
-	} `json:"auth"`
 	Logger struct {
 		LogMode     string `json:"logMode"`
 		LogRequests bool   `json:"logRequests"`
@@ -43,6 +44,17 @@ type Config struct {
 		MaxRecConns uint     `json:"maxRecConns"`
 		ExpirTime   uint     `json:"expirTimeMin"`
 	} `json:"rateLimiter"`
+}
+
+type ConfigEmptyKey struct{}
+type ConfigWeakKey struct{}
+
+func (e ConfigEmptyKey) Error() string {
+	return "Empty key value"
+}
+
+func (e ConfigWeakKey) Error() string {
+	return "Key is too weak"
 }
 
 func New() Config {
@@ -62,4 +74,35 @@ func (c *Config) ReadConfig(configPath string) error {
 		c.Cache.ExpCache = 30
 	}
 	return nil
+}
+
+func (c *Config) ReadKey() ([]byte, error) {
+	var (
+		key []byte
+	)
+	switch c.Signing.Type {
+	case "file":
+		f, err := os.Open(c.Signing.Value)
+		if err != nil {
+			return nil, err
+		}
+		defer f.Close()
+		buf := new(bytes.Buffer)
+
+		_, err = io.Copy(buf, f)
+		if err != nil {
+			return nil, err
+		}
+
+		key = buf.Bytes()
+	case "value":
+		key = []byte(c.Signing.Value)
+		if len(key) < 8 {
+			return nil, ConfigWeakKey{}
+		}
+	default:
+		return nil, ConfigEmptyKey{}
+	}
+
+	return key, nil
 }

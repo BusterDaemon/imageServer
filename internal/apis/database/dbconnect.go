@@ -12,14 +12,34 @@ import (
 	"gorm.io/gorm"
 )
 
+type User struct {
+	Login       string   `json:"Login" gorm:"unique,not_null,column:user_login"`
+	DisplayName string   `json:"DisplayName" gorm:"not_null,column:username"`
+	Passw       string   `gorm:"not_null,column:user_password"`
+	UserType    int      `json:"UserType" gorm:"not_null,column:user_type"`
+	Images      []Images `json:"posts" gorm:"foreignKey:User"`
+	gorm.Model
+}
+
 type Images struct {
-	Id           uint      `gorm:"primaryKey,unique,not_null,autoIncrement"`
+	Id           uint      `json:"id" gorm:"primaryKey,unique,not_null,autoIncrement"`
 	FilePath     string    `gorm:"unique,not_null"`
-	XDim         uint      `gorm:"column:xdim"`
-	YDim         uint      `gorm:"column:ydim"`
-	DateAdded    time.Time `gorm:"column:added_at"`
-	DateCreated  time.Time `gorm:"column:created_at"`
-	DateModified time.Time `gorm:"column:modified_at"`
+	XDim         uint      `json:"width" gorm:"column:xdim"`
+	YDim         uint      `json:"heigth" gorm:"column:ydim"`
+	Tags         []Tag     `json:"tags" gorm:"many2many:image_tags"`
+	Score        int       `json:"score" gorm:"column:score"`
+	User         int       `json:"author"`
+	Format       string    `json:"format" gorm:"not_null"`
+	Hash         string    `json:"md5sum" gorm:"not_null,unique"`
+	DateAdded    time.Time `json:"added" gorm:"column:added_at"`
+	DateCreated  time.Time `json:"created" gorm:"column:created_at"`
+	DateModified time.Time `json:"modified" gorm:"column:modified_at"`
+}
+
+type Tag struct {
+	Id     uint     `json:"id" gorm:"primaryKey,unique,not_null,autoIncrement,column:id"`
+	Value  string   `json:"value" gorm:"unique,not_null,column:value"`
+	Images []Images `gorm:"many2many:image_tags"`
 }
 
 type ClientReqs struct {
@@ -83,8 +103,10 @@ func ConnectDb(config config.Config, logger *zap.Logger) (*gorm.DB, error) {
 		return nil, err
 	}
 	err = db.AutoMigrate(
-		&Images{},
-		&ClientReqs{},
+		Tag{},
+		Images{},
+		ClientReqs{},
+		User{},
 	)
 	if err != nil {
 		logger.Error(

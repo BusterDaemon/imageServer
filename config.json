@@ -1,10 +1,12 @@
 {
     "port": 9150,
     "address": "0.0.0.0",
-    "rootFolder": [
-        "/app/images"
-    ],
+    "rootFolder": "./tmp/uploads/images",
     "allowGifs": true,
+    "signingKey": {
+        "type": "file",
+        "value": "./key"
+    },
     "database": {
         "dbType": "sqlite",
         "dbAddress": "./images.db",
@@ -25,11 +27,6 @@
             "application/json",
             "text/plain"
         ]
-    },
-    "auth": {
-        "enable": false,
-        "login": "admin",
-        "password": "admin"
     },
     "logger": {
         "logMode": "dev",

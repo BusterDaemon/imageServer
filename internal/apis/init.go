@@ -2,6 +2,7 @@ package apis
 
 import (
 	"buster_daemon/imageserver/internal/apis/database"
+	"buster_daemon/imageserver/internal/apis/tokens"
 	"buster_daemon/imageserver/internal/config"
 	"fmt"
 	"net"
@@ -23,11 +24,14 @@ import (
 )
 
 func Start(cnf *config.Config, db *gorm.DB, zapper *zap.Logger) {
-	app := fiber.New()
+	app := fiber.New(
+		fiber.Config{
+			BodyLimit: 300 * 1024 * 1024,
+		},
+	)
 	api := app.Group("/api")
 	getters := api.Group("/get")
-	putters := api.Group("/put")
-	scanners := putters.Group("/scan")
+	posters := api.Group("/post")
 
 	api.Use(logger.New(logger.Config{
 		Next:          nil,
@@ -139,8 +143,29 @@ func Start(cnf *config.Config, db *gorm.DB, zapper *zap.Logger) {
 	getters.Get("/image", specificImage)
 	getters.Get("/image/info", imageInfo)
 	getters.Get("/random", getRandFile)
-	scanners.Put("/new", startNewScan)
-	scanners.Put("/old", startNonExistScan)
+	posters.Post("/login", loginUser)
+
+	posters.Use(func(ctx *fiber.Ctx) error {
+		var (
+			token  string      = ctx.Cookies("token")
+			rToken string      = ctx.Cookies("refreshToken")
+			logger *zap.Logger = ctx.Locals("logger").(*zap.Logger)
+		)
+
+		_, err := tokens.VerifyToken(token, ctx)
+		if err != nil {
+			logger.Warn(err.Error())
+			logger.Sugar().Warnf("Trying refresh token for user: %s", ctx.IP())
+			err = tokens.RefreshToken(rToken, ctx)
+			if err != nil {
+				return err
+			}
+		}
+
+		return ctx.Next()
+	})
+	posters.Post("/new", postImage)
+	posters.Post("/register", registerUser)
 
 	ln, err := net.Listen("tcp", fmt.Sprintf("%s:%d", cnf.Address, cnf.Port))
 	if err != nil {
