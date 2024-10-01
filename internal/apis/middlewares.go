@@ -72,6 +72,10 @@ func createCaching(
 			return true
 		}
 
+		if strings.Contains(ctx.Route().Path, "/get/image/random") {
+			return true
+		}
+
 		cType := ctx.GetRespHeader("Content-Type")
 
 		for _, s := range conf.Cache.WhitelistResp {
