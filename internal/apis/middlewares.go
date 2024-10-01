@@ -105,7 +105,12 @@ func createReqsLogger(
 	logs *zap.Logger,
 ) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
-		err := ctx.Next()
+		headers := ctx.GetReqHeaders()
+		if dnt, ok := headers["Dnt"]; ok {
+			if dnt[0] == "1" {
+				return ctx.Next()
+			}
+		}
 
 		database.InsertClientReqRecord(
 			db,
@@ -120,7 +125,7 @@ func createReqsLogger(
 			},
 			logs,
 		)
-		return err
+		return ctx.Next()
 	}
 }
 
