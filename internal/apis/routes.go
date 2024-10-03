@@ -59,9 +59,10 @@ func addRoutes(
 	getterImager.Get("/search", searchImages)
 	getterImager.Get("/:hash", getImage)
 	getterImager.Get("/:hash/info.json", getImageInfo)
+
 	posters.Post("/login", loginUser)
+	posters.Post("/register", registerUser)
 
 	posters.Use(createTokenVerifier())
 	posters.Post("/new", postImage)
-	posters.Post("/register", registerUser)
 }

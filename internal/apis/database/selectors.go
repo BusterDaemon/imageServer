@@ -55,6 +55,7 @@ func GetImagesWithTags(db *gorm.DB, tags []string) ([]ImageWithTags, error) {
 		results []ImageWithTags = []ImageWithTags{}
 	)
 
+	// TODO: Rewrite to GORM
 	resdb := db.Raw(
 		`SELECT DISTINCT i.xdim, i.ydim,
 u.display_name, i.score,

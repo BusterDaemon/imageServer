@@ -132,19 +132,22 @@ func createReqsLogger(
 func createTokenVerifier() func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		var (
-			token  string      = ctx.Cookies("token")
-			rToken string      = ctx.Cookies("refreshToken")
-			logger *zap.Logger = ctx.Locals("logger").(*zap.Logger)
+			token  string         = ctx.Cookies("token")
+			rToken string         = ctx.Cookies("refreshToken")
+			logger *zap.Logger    = ctx.Locals("logger").(*zap.Logger)
+			conf   *config.Config = ctx.Locals("conf").(*config.Config)
 		)
 
 		_, err := tokens.VerifyToken(token, ctx)
 		if err != nil {
 			logger.Warn(err.Error())
 			logger.Sugar().Warnf("Trying refresh token for user: %s", ctx.IP())
-			err = tokens.RefreshToken(rToken, ctx)
+			cook, err := tokens.RefreshToken(rToken, conf)
 			if err != nil {
+				logger.Error(err.Error())
 				return err
 			}
+			ctx.Cookie(cook)
 		}
 
 		return ctx.Next()

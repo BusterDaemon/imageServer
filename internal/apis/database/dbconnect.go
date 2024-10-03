@@ -30,7 +30,7 @@ type Images struct {
 	Score        int       `json:"score" gorm:"column:score"`
 	User         int       `json:"author"`
 	Format       string    `json:"format" gorm:"not_null"`
-	Hash         string    `json:"md5sum" gorm:"not_null,unique"`
+	Hash         string    `json:"md5sum" gorm:"primaryKey,not_null,unique"`
 	DateAdded    time.Time `json:"added" gorm:"column:added_at"`
 	DateCreated  time.Time `json:"created" gorm:"column:created_at"`
 	DateModified time.Time `json:"modified" gorm:"column:modified_at"`
