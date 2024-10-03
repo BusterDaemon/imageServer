@@ -2,6 +2,8 @@ package apis
 
 import (
 	"buster_daemon/imageserver/internal/apis/database"
+	"errors"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"go.uber.org/zap"
@@ -46,7 +48,32 @@ func getRandFile(ctx *fiber.Ctx) error {
 }
 
 func searchImages(ctx *fiber.Ctx) error {
-	return ctx.SendStatus(fiber.StatusOK)
+	var (
+		db         *gorm.DB    = ctx.Locals("db").(*gorm.DB)
+		logs       *zap.Logger = ctx.Locals("logger").(*zap.Logger)
+		tagForm    string      = ctx.Query("tags", "")
+		tagsParsed []string
+	)
+
+	if tagForm == "" {
+		return ctx.SendStatus(fiber.StatusBadRequest)
+	}
+
+	tagsParsed = strings.Split(tagForm, ";")
+	if len(tagsParsed) < 1 {
+		return ctx.SendStatus(fiber.StatusBadRequest)
+	}
+
+	results, err := database.GetImagesWithTags(db, tagsParsed)
+	if err != nil {
+		logs.Error(err.Error())
+		if errors.Is(err, database.NoImageFound{}) {
+			return ctx.SendStatus(fiber.StatusNotFound)
+		}
+		ctx.SendStatus(fiber.StatusBadRequest)
+	}
+
+	return ctx.JSON(results)
 }
 
 func getImage(ctx *fiber.Ctx) error {
