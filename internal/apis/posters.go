@@ -225,8 +225,8 @@ func loginUser(ctx *fiber.Ctx) error {
 		return ctx.SendStatus(http.StatusForbidden)
 	}
 
-	res := db.Where("login = ?", login).
-		Where("passw", hashPassw).First(&database.User{})
+	res := db.Where("user_login = ?", login).
+		Where("user_password", hashPassw).First(&database.User{})
 	if errors.Is(res.Error, gorm.ErrRecordNotFound) {
 		return ctx.SendStatus(http.StatusNotFound)
 	}

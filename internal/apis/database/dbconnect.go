@@ -13,38 +13,38 @@ import (
 )
 
 type User struct {
-	Login       string   `json:"Login" gorm:"unique,not_null,column:user_login"`
-	DisplayName string   `json:"DisplayName" gorm:"not_null,column:username"`
-	Passw       string   `gorm:"not_null,column:user_password"`
-	UserType    int      `json:"UserType" gorm:"not_null,column:user_type"`
+	Login       string   `json:"Login" gorm:"unique:not_null;column:user_login"`
+	DisplayName string   `json:"DisplayName" gorm:"not_null;column:username"`
+	Passw       string   `gorm:"not_null;column:user_password"`
+	UserType    int      `json:"UserType" gorm:"not_null;column:user_type"`
 	Images      []Images `json:"posts" gorm:"foreignKey:User"`
 	gorm.Model
 }
 
 type Images struct {
-	Id           uint      `json:"id" gorm:"primaryKey,unique,not_null,autoIncrement"`
-	FilePath     string    `gorm:"unique,not_null"`
+	Id           uint      `json:"id" gorm:"primaryKey;unique:not_null;autoIncrement"`
+	FilePath     string    `gorm:"unique;not_null"`
 	XDim         uint      `json:"width" gorm:"column:xdim"`
 	YDim         uint      `json:"heigth" gorm:"column:ydim"`
 	Tags         []Tag     `json:"tags" gorm:"many2many:image_tags"`
 	Score        int       `json:"score" gorm:"column:score"`
 	User         int       `json:"author"`
 	Format       string    `json:"format" gorm:"not_null"`
-	Hash         string    `json:"md5sum" gorm:"primaryKey,not_null,unique"`
+	Hash         string    `json:"md5sum" gorm:"primaryKey;unique:not_null;index"`
 	DateAdded    time.Time `json:"added" gorm:"column:added_at"`
 	DateCreated  time.Time `json:"created" gorm:"column:created_at"`
 	DateModified time.Time `json:"modified" gorm:"column:modified_at"`
 }
 
 type Tag struct {
-	Id     uint     `json:"id" gorm:"primaryKey,unique,not_null,autoIncrement,column:id"`
-	Value  string   `json:"value" gorm:"unique,not_null,column:value"`
+	Id     uint     `json:"id" gorm:"primaryKey;unique:not_null;autoIncrement;column:id"`
+	Value  string   `json:"value" gorm:"unique:not_null;index;column:value"`
 	Images []Images `gorm:"many2many:image_tags"`
 }
 
 type ClientReqs struct {
 	Time       time.Time `gorm:"client_time_access"`
-	Ip         string    `gorm:"column:client_ip"`
+	Ip         string    `gorm:"index;column:client_ip"`
 	Url        string    `gorm:"column:client_url"`
 	Queries    string    `gorm:"column:client_queries"`
 	Ua         string    `gorm:"column:client_ua"`

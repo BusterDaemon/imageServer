@@ -42,7 +42,7 @@ func GetUser(db *gorm.DB, username string) (*User, error) {
 		usvr User
 	)
 
-	if res := db.Where("login = ?", username).First(&usvr); res.Error != nil {
+	if res := db.Where("user_login = ?", username).First(&usvr); res.Error != nil {
 		return nil, res.Error
 	}
 
@@ -58,7 +58,7 @@ func GetImagesWithTags(db *gorm.DB, tags []string) ([]ImageWithTags, error) {
 	// TODO: Rewrite to GORM
 	resdb := db.Raw(
 		`SELECT DISTINCT i.xdim, i.ydim,
-u.display_name, i.score,
+u.username, i.score,
 (SELECT GROUP_CONCAT(t.value, ';')
 FROM tags t INNER JOIN image_tags it2 ON t.id = it2.tag_id
 WHERE it2.images_id = i.id
@@ -141,7 +141,7 @@ func GetImageInfoByHash(
 			"images.ydim",
 			"images.score",
 			"GROUP_CONCAT(DISTINCT tags.value) as tags",
-			"users.display_name",
+			"users.username",
 			"images.hash",
 			"images.created_at",
 			"images.modified_at",
