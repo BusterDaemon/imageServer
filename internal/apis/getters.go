@@ -113,5 +113,20 @@ func getImage(ctx *fiber.Ctx) error {
 }
 
 func getImageInfo(ctx *fiber.Ctx) error {
-	return ctx.SendStatus(fiber.StatusOK)
+	var (
+		db       *gorm.DB    = ctx.Locals("db").(*gorm.DB)
+		logs     *zap.Logger = ctx.Locals("logger").(*zap.Logger)
+		fileHash string      = ctx.Params("hash", "")
+	)
+	if fileHash == "" {
+		ctx.SendStatus(fiber.StatusBadRequest)
+	}
+
+	info, err := database.GetImageInfoByHash(db, fileHash)
+	if err != nil {
+		logs.Error(err.Error())
+		ctx.SendStatus(fiber.StatusBadRequest)
+	}
+
+	return ctx.JSON(info)
 }

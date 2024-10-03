@@ -2,6 +2,7 @@ package database
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"gorm.io/gorm"
@@ -125,4 +126,50 @@ func GetImagePathByHash(
 		name,
 		format,
 	}, nil
+}
+
+func GetImageInfoByHash(
+	db *gorm.DB,
+	hash string,
+) (ImageWithTags, error) {
+	var imData ImageWithTags
+	res := db.
+		Table("images").
+		Select(
+			"images.xdim",
+			"images.ydim",
+			"images.score",
+			"GROUP_CONCAT(DISTINCT tags.value) as tags",
+			"users.display_name",
+			"images.hash",
+			"images.created_at",
+			"images.modified_at",
+		).
+		Joins("INNER JOIN users ON users.id = images.user").
+		Joins("INNER JOIN image_tags ON images.id = image_tags.images_id").
+		Joins("INNER JOIN tags ON tags.id = image_tags.tag_id").
+		Where("hash = ?", hash)
+	if res.Error != nil {
+		return ImageWithTags{}, res.Error
+	}
+
+	err := res.Row().Scan(
+		&imData.XDim,
+		&imData.YDim,
+		&imData.Score,
+		&imData.TagList,
+		&imData.AuthorName,
+		&imData.Hash,
+		&imData.Created,
+		&imData.Modified,
+	)
+	if err != nil {
+		return ImageWithTags{}, err
+	}
+
+	imData.TagList = strings.ReplaceAll(
+		imData.TagList, ",", ";",
+	)
+
+	return imData, nil
 }
