@@ -97,3 +97,24 @@ GROUP BY i.id;`, tags,
 
 	return results, nil
 }
+
+func GetImagePathByHash(
+	db *gorm.DB,
+	hash string,
+) (string, error) {
+	var path string
+
+	res := db.Select("file_path").
+		Where("hash = ?", hash).
+		Find(&Images{})
+	if res.Error != nil {
+		return "", res.Error
+	}
+
+	err := res.Row().Scan(&path)
+	if err != nil {
+		return "", err
+	}
+
+	return path, nil
+}

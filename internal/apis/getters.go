@@ -77,7 +77,32 @@ func searchImages(ctx *fiber.Ctx) error {
 }
 
 func getImage(ctx *fiber.Ctx) error {
-	return ctx.SendStatus(fiber.StatusOK)
+	var (
+		db        *gorm.DB    = ctx.Locals("db").(*gorm.DB)
+		logs      *zap.Logger = ctx.Locals("logger").(*zap.Logger)
+		hashImage string      = ctx.Params("hash", "")
+		filePath  string
+	)
+	if hashImage == "" {
+		ctx.SendStatus(fiber.StatusBadRequest)
+	}
+
+	filePath, err := database.GetImagePathByHash(
+		db, hashImage,
+	)
+	if err != nil {
+		logs.Error(err.Error())
+		if errors.Is(err, database.NoImageFound{}) {
+			return ctx.SendStatus(fiber.StatusNotFound)
+		}
+		ctx.SendStatus(fiber.StatusBadRequest)
+	}
+
+	if filePath == "" {
+		return ctx.SendStatus(fiber.StatusNotFound)
+	}
+
+	return ctx.SendFile(filePath)
 }
 
 func getImageInfo(ctx *fiber.Ctx) error {
