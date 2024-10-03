@@ -81,13 +81,13 @@ func getImage(ctx *fiber.Ctx) error {
 		db        *gorm.DB    = ctx.Locals("db").(*gorm.DB)
 		logs      *zap.Logger = ctx.Locals("logger").(*zap.Logger)
 		hashImage string      = ctx.Params("hash", "")
-		filePath  string
+		fileData  []string
 	)
 	if hashImage == "" {
 		ctx.SendStatus(fiber.StatusBadRequest)
 	}
 
-	filePath, err := database.GetImagePathByHash(
+	fileData, err := database.GetImagePathByHash(
 		db, hashImage,
 	)
 	if err != nil {
@@ -98,11 +98,18 @@ func getImage(ctx *fiber.Ctx) error {
 		ctx.SendStatus(fiber.StatusBadRequest)
 	}
 
-	if filePath == "" {
+	if len(fileData) == 0 {
 		return ctx.SendStatus(fiber.StatusNotFound)
 	}
 
-	return ctx.SendFile(filePath)
+	ctx.Set(
+		"Content-Disposition",
+		"inline;filename=\""+
+			fileData[1]+fileData[2]+
+			"\"",
+	)
+
+	return ctx.SendFile(fileData[0])
 }
 
 func getImageInfo(ctx *fiber.Ctx) error {
