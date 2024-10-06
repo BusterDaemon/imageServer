@@ -2,9 +2,11 @@ package apis
 
 import (
 	"buster_daemon/imageserver/internal/apis/database"
+	"net/http"
 	"net/url"
 	"time"
 
+	ratelimit "github.com/JGLTechnologies/gin-rate-limit"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 	"gorm.io/gorm"
@@ -41,4 +43,18 @@ func RequestLogger(db *gorm.DB, logs *zap.Logger) func() gin.HandlerFunc {
 			}
 		}
 	}
+}
+
+func rateLimiterErrHandler(ctx *gin.Context, i ratelimit.Info) {
+	ctx.String(
+		http.StatusTooManyRequests,
+		"Too many requests! Retry in %s",
+		time.
+			Until(i.ResetTime).
+			String(),
+	)
+}
+
+func rateLimitKeyFunc(ctx *gin.Context) string {
+	return ctx.ClientIP()
 }
