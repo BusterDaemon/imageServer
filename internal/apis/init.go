@@ -17,8 +17,12 @@ func Start(cnf *config.Config, db *gorm.DB, zapper *zap.Logger) {
 	app.Use(
 		gin.Logger(),
 		gin.Recovery(),
-		RequestLogger(db, zapper)(),
 	)
+
+	if cnf.Logger.LogRequests {
+		zapper.Debug("Enable log requests")
+		app.Use(RequestLogger(db, zapper)())
+	}
 	addRoutes(app, db, cnf, zapper)
 
 	zapper.Error("error",
