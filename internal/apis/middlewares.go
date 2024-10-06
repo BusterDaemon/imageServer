@@ -23,7 +23,13 @@ func RequestLogger(db *gorm.DB, logs *zap.Logger) func() gin.HandlerFunc {
 					Method:     ctx.Request.Method,
 					StatusCode: ctx.Copy().Writer.Status(),
 				}
+				header string
 			)
+
+			header = ctx.GetHeader("Dnt")
+			if header == "1" {
+				return
+			}
 			req.Queries, err = url.QueryUnescape(ctx.Request.URL.RawQuery)
 			if err != nil {
 				logs.Debug(req.Queries)
